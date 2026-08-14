@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Celina Agencia de Viajes — Sistema de Cotizaciones</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/cotizador.css">
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-box glass" id="loginBox">
+    <div class="login-logo">
+      <img class="js-celina-logo" alt="Celina Agencia de Viajes">
+    </div>
+    <h1 class="login-title">Celina Agencia de Viajes</h1>
+    <p class="login-subtitle">Sistema de cotizaciones — Acceso privado</p>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="f-login-user">Usuario</label>
+        <input type="text" id="f-login-user" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="f-login-pass">Contraseña</label>
+        <input type="password" id="f-login-pass" autocomplete="current-password" required>
+      </div>
+
+      <p class="login-error" id="loginError">⚠️ Usuario o contraseña incorrectos.</p>
+
+      <button type="submit" class="btn btn-primary">🔐 Iniciar sesión</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="appRoot">
+
+<header class="app-header">
+  <div class="app-header-brand">
+    <span class="icon-plane">✈️</span>
+    <div>
+      <h1>Celina Agencia de Viajes</h1>
+      <p>Sistema de cotizaciones y tarifas</p>
+    </div>
+  </div>
+  <button type="button" class="btn btn-secondary" id="btnLogout">🚪 Cerrar sesión</button>
+</header>
+
+<div class="app-grid">
+
+  <!-- ===================== 1. FORMULARIO ===================== -->
+  <section class="panel glass" id="panel-form">
+    <div class="form-header">
+      <h2 id="formTitle">📝 Nueva cotización</h2>
+      <button type="button" class="btn btn-new-quote" id="btnNewQuote">✨ Nueva</button>
+    </div>
+    <form id="quoteForm">
+      <div class="field">
+        <label for="f-cliente">Nombre del Cliente</label>
+        <input type="text" id="f-cliente" required placeholder="Ej. Laura Gómez">
+      </div>
+
+      <div class="field">
+        <label for="f-telefono">Teléfono / WhatsApp</label>
+        <input type="tel" id="f-telefono" required placeholder="Ej. +57 300 123 4567">
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="f-origen">Origen</label>
+          <input type="text" id="f-origen" required placeholder="Ej. BCN">
+        </div>
+        <div class="field">
+          <label for="f-destino">Destino</label>
+          <input type="text" id="f-destino" required placeholder="Ej. BOG">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="f-fecha-ida">Fecha Ida</label>
+          <input type="date" id="f-fecha-ida" required>
+        </div>
+        <div class="field">
+          <label for="f-fecha-vuelta">Fecha Vuelta</label>
+          <input type="date" id="f-fecha-vuelta">
+        </div>
+      </div>
+
+      <label class="checkbox-field">
+        <input type="checkbox" id="f-solo-ida">
+        <span>Solo ida (el cliente no pidió vuelta)</span>
+      </label>
+
+      <div class="field">
+        <label>Pasajeros</label>
+        <div class="passenger-row">
+          <div class="passenger-field">
+            <label for="f-adultos">Adultos</label>
+            <input type="number" id="f-adultos" min="1" step="1" value="1">
+          </div>
+          <div class="passenger-field">
+            <label for="f-ninos">Niños</label>
+            <input type="number" id="f-ninos" min="0" step="1" value="0">
+          </div>
+          <div class="passenger-field">
+            <label for="f-bebes">Bebés</label>
+            <input type="number" id="f-bebes" min="0" step="1" value="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="f-equipaje">Equipaje</label>
+        <select id="f-equipaje">
+          <option value="Mochila">Mochila (personal)</option>
+          <option value="Cabina">Cabina</option>
+          <option value="Maleta" selected>Maleta facturada</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="f-tarifa">Tarifa Base</label>
+          <input type="number" id="f-tarifa" required min="0" step="0.01" placeholder="Ej. 320">
+        </div>
+        <div class="field">
+          <label for="f-tasas">Tasas</label>
+          <input type="number" id="f-tasas" required min="0" step="0.01" placeholder="Ej. 85">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="f-notas">Notas</label>
+        <textarea id="f-notas" placeholder="Ej. Incluye check-in web gratuito"></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="btnSubmitForm">💾 Calcular y Guardar Cotización</button>
+      <button type="button" class="btn btn-secondary" id="btnCancelEdit" style="display:none; margin-top:8px;">✖️ Cancelar edición</button>
+    </form>
+  </section>
+
+  <!-- ===================== 2. TARJETA VISUAL ============== -->
+  <section class="panel glass" id="panel-preview">
+    <h2>✨ Vista previa</h2>
+
+    <div class="flight-card" id="flightCard">
+      <div id="previewEmpty" class="preview-empty">
+        Completa el formulario y guarda una cotización, o elige una del historial, para verla aquí.
+      </div>
+
+      <div id="previewContent" style="display:none;">
+        <div class="card-header">
+          <div>
+            <div class="brand-name">Celina Agencia de Viajes</div>
+            <div class="client-label">Cliente</div>
+            <div class="client-name" id="pv-cliente">—</div>
+          </div>
+          <div class="card-logo">
+            <img class="js-celina-logo" alt="Celina">
+          </div>
+        </div>
+
+        <div class="agency-contact">
+          <div class="contact-line">✉️ <span>celina.env.r@gmail.com</span></div>
+          <div class="contact-line">🏙️ <span><strong>Población:</strong> La Seu d'Urgell</span></div>
+          <div class="contact-line">☎️ <span><strong>Teléfono:</strong> +34 621 42 80 21</span></div>
+          <div class="contact-line">📞 <span><strong>WhatsApp:</strong> +34 621 20 17 17</span></div>
+        </div>
+
+        <div class="route-box">
+          <div class="route-point" id="pv-origen-box">
+            <span class="route-code" id="pv-origen">—</span>
+            <span class="route-label">Origen</span>
+          </div>
+          <div class="route-line">
+            <span class="plane-mini">✈️</span>
+            <div class="dash"></div>
+          </div>
+          <div class="route-point" id="pv-destino-box">
+            <span class="route-code" id="pv-destino">—</span>
+            <span class="route-label">Destino</span>
+          </div>
+        </div>
+
+        <div class="details-grid">
+          <div class="detail-chip" id="pv-ida-box">
+            <div class="label">Fecha Ida</div>
+            <div class="value" id="pv-ida">—</div>
+          </div>
+          <div class="detail-chip" id="pv-vuelta-box">
+            <div class="label">Fecha Vuelta</div>
+            <div class="value" id="pv-vuelta">—</div>
+          </div>
+          <div class="detail-chip" id="pv-equipaje-box">
+            <div class="label">Equipaje</div>
+            <div class="value" id="pv-equipaje">—</div>
+          </div>
+          <div class="detail-chip" id="pv-telefono-box">
+            <div class="label">WhatsApp</div>
+            <div class="value" id="pv-telefono">—</div>
+          </div>
+          <div class="detail-chip full" id="pv-pasajeros-box">
+            <div class="label">Pasajeros</div>
+            <div class="value" id="pv-pasajeros">—</div>
+          </div>
+        </div>
+
+        <div class="price-box">
+          <div class="price-row" id="pv-tarifa-box">
+            <span>Tarifa base</span>
+            <span id="pv-tarifa">—</span>
+          </div>
+          <div class="price-row" id="pv-tasas-box">
+            <span>Tasas e impuestos</span>
+            <span id="pv-tasas">—</span>
+          </div>
+          <div class="price-total-row" id="pv-total-box">
+            <span class="price-total-label">Precio total</span>
+            <span class="price-total" id="pv-total">—</span>
+          </div>
+        </div>
+
+        <div class="notes-box" id="pv-notas">—</div>
+
+        <div class="actions">
+          <button class="btn btn-whatsapp" id="btnWhatsapp">📋 Copiar Texto WhatsApp</button>
+          <button class="btn btn-pdf" id="btnPdf">📥 Descargar PDF</button>
+          <button class="btn btn-png" id="btnPng">🖼️ Guardar PNG</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 3. HISTORIAL ===================== -->
+  <section class="panel glass" id="panel-history">
+    <div class="history-header">
+      <h2>🗂️ Historial de tarifas</h2>
+      <button type="button" class="btn btn-secondary" id="btnToggleTrash">🗑️ Papelera</button>
+    </div>
+
+    <div class="history-filters" id="historyFilters">
+      <input type="text" id="f-hist-search" class="history-search" placeholder="🔍 Buscar por cliente, origen o destino...">
+      <div class="history-filters-row">
+        <div class="field">
+          <label for="f-hist-desde">Vuelo desde</label>
+          <input type="date" id="f-hist-desde">
+        </div>
+        <div class="field">
+          <label for="f-hist-hasta">Vuelo hasta</label>
+          <input type="date" id="f-hist-hasta">
+        </div>
+        <button type="button" class="btn btn-secondary" id="btnClearFilters">✖️ Limpiar</button>
+      </div>
+    </div>
+
+    <div class="history-list" id="historyList">
+      <div class="history-empty">No hay cotizaciones guardadas aún.</div>
+    </div>
+  </section>
+
+</div>
+
+</div><!-- /#appRoot -->
+
+<div id="toast"></div>
+
+<div id="confirmModal" class="modal-overlay">
+  <div class="modal-box glass" id="confirmModalBox">
+    <span class="modal-icon">⚠️</span>
+    <p id="confirmModalMessage">¿Estás seguro?</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" id="confirmModalCancel">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="confirmModalOk">Sí, guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Librerías para exportar PDF / PNG -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<!-- Módulos propios (el orden importa: cada archivo cuelga de window.Celina) -->
+<script src="js/config.js"></script>
+<script src="js/logo-data.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/modal.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/preview.js"></script>
+<script src="js/focus-sync.js"></script>
+<script src="js/form.js"></script>
+<script src="js/history.js"></script>
+<script src="js/export.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>
