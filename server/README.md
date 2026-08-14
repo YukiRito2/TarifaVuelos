@@ -46,7 +46,7 @@ Backend de Node.js + Express + PostgreSQL para que varios agentes vean y editen 
    - `AUTH_PASSWORD_HASH` → el hash generado en el paso 2 (nunca la contraseña real).
    - `JWT_SECRET` → el valor generado en el paso 3 de la sección anterior.
    - `JWT_EXPIRES_IN` → `12h` (o el valor que prefieras).
-   - `FRONTEND_ORIGIN` → la URL donde vas a alojar `cotizador-celina.html` (ej. `https://celina-cotizador.netlify.app`). Si necesitás más de un origen, separalos por coma.
+   - `FRONTEND_ORIGIN` → la URL donde vas a alojar `index.html` (ej. `https://celina-cotizador.onrender.com`). Si necesitás más de un origen, separalos por coma.
 4. Deploy. Probá `https://tu-servicio.onrender.com/api/health`.
 5. Actualizá `Celina.config.API_BASE_URL` en el frontend (`js/config.js`) con esta URL real, y volvé a publicar el sitio estático.
 
