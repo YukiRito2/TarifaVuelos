@@ -11,7 +11,7 @@ Celina.config = {
   // por la URL real del servicio una vez desplegado en Render.
   API_BASE_URL: (["localhost", "127.0.0.1", ""].includes(location.hostname))
     ? "http://localhost:3000/api"
-    : "https://TU-SERVICIO.onrender.com/api",
+    : "https://celina-cotizador-api.onrender.com/api",
   // Solo para mostrar la cuenta regresiva en la papelera — el borrado
   // real a los 30 días lo hace el servidor, no el navegador.
   TRASH_RETENTION_DAYS: 30,
