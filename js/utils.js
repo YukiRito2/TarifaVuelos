@@ -51,6 +51,22 @@ Celina.utils = (function(){
     return parts.length ? parts.join(", ") : "—";
   }
 
+  /**
+   * Escapa caracteres HTML especiales. Se usa antes de insertar texto
+   * de cotizaciones (nombre del cliente, origen, destino) dentro de
+   * innerHTML en el historial — sin esto, alguien podría escribir
+   * "<img src=x onerror=...>" como nombre de cliente y ejecutar script
+   * en la pantalla de cualquier otro agente que vea el historial.
+   */
+  function escapeHtml(value){
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
   function showToast(message){
     const toast = document.getElementById("toast");
     toast.textContent = message;
@@ -59,5 +75,5 @@ Celina.utils = (function(){
     toast.classList.add("show");
   }
 
-  return { formatMoney, formatDate, formatDateTime, formatPassengers, showToast };
+  return { formatMoney, formatDate, formatDateTime, formatPassengers, escapeHtml, showToast };
 })();

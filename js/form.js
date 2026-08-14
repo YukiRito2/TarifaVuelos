@@ -135,9 +135,9 @@ Celina.form = (function(){
     evt.preventDefault();
 
     const values = readFormValues();
-    const total = values.tarifaBase + values.tasas;
-    const quotes = Celina.state.quotes;
     const editingId = Celina.state.editingId;
+    const submitBtn = document.getElementById("btnSubmitForm");
+    const originalBtnText = submitBtn.textContent;
 
     let quote;
 
@@ -145,19 +145,39 @@ Celina.form = (function(){
       const confirmed = await Celina.modal.confirm("¿Estás seguro de guardar cambios?");
       if(!confirmed) return;
 
-      const idx = quotes.findIndex(q => q.id === editingId);
-      if(idx === -1){ exitEditMode(); return; }
+      submitBtn.disabled = true;
+      submitBtn.textContent = "⏳ Guardando...";
+      try{
+        quote = await Celina.api.updateQuote(editingId, values);
+      }catch(err){
+        showToast("⚠️ " + err.message);
+        return;
+      }finally{
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
+      }
 
-      quote = Object.assign({}, quotes[idx], values, { total, updatedAt: new Date().toISOString() });
-      quotes[idx] = quote;
+      const idx = Celina.state.quotes.findIndex(q => q.id === editingId);
+      if(idx !== -1){ Celina.state.quotes[idx] = quote; }
+      else{ Celina.state.quotes.unshift(quote); }
       showToast("✅ Cotización actualizada");
     }else{
-      quote = Object.assign({ id: String(Date.now()), createdAt: new Date().toISOString() }, values, { total });
-      quotes.unshift(quote);
+      submitBtn.disabled = true;
+      submitBtn.textContent = "⏳ Guardando...";
+      try{
+        quote = await Celina.api.createQuote(values);
+      }catch(err){
+        showToast("⚠️ " + err.message);
+        return;
+      }finally{
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
+      }
+
+      Celina.state.quotes.unshift(quote);
       showToast("✅ Cotización calculada y guardada");
     }
 
-    Celina.storage.persistQuotes();
     Celina.history.renderHistory();
 
     // El formulario y la tarjeta se quedan mostrando lo que se acaba de

@@ -1,7 +1,7 @@
 window.Celina = window.Celina || {};
 
 Celina.history = (function(){
-  const { formatMoney, formatDate, formatDateTime, showToast } = Celina.utils;
+  const { formatMoney, formatDate, formatDateTime, escapeHtml, showToast } = Celina.utils;
 
   let showingTrash = false;
 
@@ -65,16 +65,16 @@ Celina.history = (function(){
     }
 
     list.innerHTML = filtered.map(q => `
-      <div class="history-item" data-id="${q.id}">
+      <div class="history-item" data-id="${escapeHtml(q.id)}">
         <div class="history-info">
-          <span class="history-client">👤 ${q.cliente}</span>
-          <span class="history-route">${q.origen} ➔ ${q.destino}</span>
+          <span class="history-client">👤 ${escapeHtml(q.cliente)}</span>
+          <span class="history-route">${escapeHtml(q.origen)} ➔ ${escapeHtml(q.destino)}</span>
           <span class="history-meta">🛫 Vuelo: ${formatDate(q.fechaIda)} &nbsp;·&nbsp; 🕐 Creada: ${formatDateTime(q.createdAt)}</span>
           <span class="history-total">${formatMoney(q.total)}</span>
         </div>
         <div class="history-buttons">
-          <button class="btn btn-edit" data-action="edit" data-id="${q.id}">✏️ Ver y Editar</button>
-          <button class="btn btn-danger" data-action="delete" data-id="${q.id}">🗑️ Eliminar</button>
+          <button class="btn btn-edit" data-action="edit" data-id="${escapeHtml(q.id)}">✏️ Ver y Editar</button>
+          <button class="btn btn-danger" data-action="delete" data-id="${escapeHtml(q.id)}">🗑️ Eliminar</button>
         </div>
       </div>
     `).join("");
@@ -98,16 +98,16 @@ Celina.history = (function(){
     const sorted = trash.slice().sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt));
 
     list.innerHTML = sorted.map(q => `
-      <div class="history-item history-item-trash" data-id="${q.id}">
+      <div class="history-item history-item-trash" data-id="${escapeHtml(q.id)}">
         <div class="history-info">
-          <span class="history-client">👤 ${q.cliente}</span>
-          <span class="history-route">${q.origen} ➔ ${q.destino}</span>
+          <span class="history-client">👤 ${escapeHtml(q.cliente)}</span>
+          <span class="history-route">${escapeHtml(q.origen)} ➔ ${escapeHtml(q.destino)}</span>
           <span class="history-meta">🗑️ Eliminada: ${formatDateTime(q.deletedAt)} &nbsp;·&nbsp; ⏳ Se borra en ${daysLeft(q.deletedAt)} día(s)</span>
           <span class="history-total">${formatMoney(q.total)}</span>
         </div>
         <div class="history-buttons">
-          <button class="btn btn-edit" data-action="restore" data-id="${q.id}">♻️ Restaurar</button>
-          <button class="btn btn-danger" data-action="purge" data-id="${q.id}">❌ Eliminar definitivo</button>
+          <button class="btn btn-edit" data-action="restore" data-id="${escapeHtml(q.id)}">♻️ Restaurar</button>
+          <button class="btn btn-danger" data-action="purge" data-id="${escapeHtml(q.id)}">❌ Eliminar definitivo</button>
         </div>
       </div>
     `).join("");
@@ -136,15 +136,16 @@ Celina.history = (function(){
     const confirmed = await Celina.modal.confirm("¿Mover esta cotización a la papelera? Se eliminará definitivamente en 30 días.");
     if(!confirmed) return;
 
-    const idx = Celina.state.quotes.findIndex(q => q.id === id);
-    if(idx === -1) return;
+    let trashed;
+    try{
+      trashed = await Celina.api.softDeleteQuote(id);
+    }catch(err){
+      showToast("⚠️ " + err.message);
+      return;
+    }
 
-    const [quote] = Celina.state.quotes.splice(idx, 1);
-    quote.deletedAt = new Date().toISOString();
-    Celina.state.trash.unshift(quote);
-
-    Celina.storage.persistQuotes();
-    Celina.storage.persistTrash();
+    Celina.state.quotes = Celina.state.quotes.filter(q => q.id !== id);
+    Celina.state.trash.unshift(trashed);
     renderHistory();
 
     const { currentQuote, editingId } = Celina.state;
@@ -160,16 +161,17 @@ Celina.history = (function(){
     showToast("🗑️ Movida a la papelera");
   }
 
-  function handleRestoreQuote(id){
-    const idx = Celina.state.trash.findIndex(q => q.id === id);
-    if(idx === -1) return;
+  async function handleRestoreQuote(id){
+    let restored;
+    try{
+      restored = await Celina.api.restoreQuote(id);
+    }catch(err){
+      showToast("⚠️ " + err.message);
+      return;
+    }
 
-    const [quote] = Celina.state.trash.splice(idx, 1);
-    delete quote.deletedAt;
-    Celina.state.quotes.unshift(quote);
-
-    Celina.storage.persistQuotes();
-    Celina.storage.persistTrash();
+    Celina.state.trash = Celina.state.trash.filter(q => q.id !== id);
+    Celina.state.quotes.unshift(restored);
     renderHistory();
 
     showToast("♻️ Cotización restaurada al historial");
@@ -179,15 +181,36 @@ Celina.history = (function(){
     const confirmed = await Celina.modal.confirm("¿Eliminar esta cotización definitivamente? Esta acción no se puede deshacer.");
     if(!confirmed) return;
 
+    try{
+      await Celina.api.permanentDeleteQuote(id);
+    }catch(err){
+      showToast("⚠️ " + err.message);
+      return;
+    }
+
     Celina.state.trash = Celina.state.trash.filter(q => q.id !== id);
-    Celina.storage.persistTrash();
     renderHistory();
 
     showToast("🗑️ Cotización eliminada definitivamente");
   }
 
-  function handleToggleTrash(){
+  /**
+   * Al entrar a la vista de papelera se refresca desde el servidor (no
+   * en cada render): con varios agentes usando la app a la vez, mostrar
+   * una foto vieja podría llevar a restaurar/purgar algo que otro
+   * agente ya movió.
+   */
+  async function handleToggleTrash(){
     showingTrash = !showingTrash;
+
+    if(showingTrash){
+      try{
+        Celina.state.trash = await Celina.api.listTrash();
+      }catch(err){
+        showToast("⚠️ " + err.message);
+      }
+    }
+
     renderHistory();
   }
 
